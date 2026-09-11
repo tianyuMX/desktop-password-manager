@@ -19,3 +19,7 @@ npm run package
 ```
 
 > 密码库、环境变量、构建产物和本地缓存不会提交到 Git 仓库。
+
+## 许可证
+
+本项目采用 [PolyForm Noncommercial License 1.0.0](LICENSE.md)。允许非商业使用、修改和分发；未经另行授权，不允许商业使用。
