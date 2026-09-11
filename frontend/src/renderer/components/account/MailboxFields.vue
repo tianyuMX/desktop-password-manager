@@ -1,0 +1,11 @@
+<template>
+  <v-text-field v-model="username" autocomplete="off" density="comfortable" hide-details label="邮箱账号" placeholder="name@example.com" variant="outlined" />
+  <v-text-field v-model="password" autocomplete="new-password" density="comfortable" hide-details label="邮箱密码" type="password" variant="outlined" />
+  <v-text-field v-model="url" density="comfortable" hide-details label="邮箱网页登录地址" placeholder="例如 mail.com" variant="outlined" />
+</template>
+
+<script setup lang="ts">
+const username = defineModel<string>('username', { required: true })
+const password = defineModel<string>('password', { required: true })
+const url = defineModel<string>('url', { required: true })
+</script>
