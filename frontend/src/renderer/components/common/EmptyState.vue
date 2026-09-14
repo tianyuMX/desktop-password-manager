@@ -8,6 +8,7 @@
 </template>
 
 <script setup lang="ts">
+/** 通用空状态占位：shield 模式展示盾牌插画 + 引导文案，否则显示信息图标 */
 import shieldIcon from '../../assets/images/shield-icon.png'
 
 withDefaults(defineProps<{ text: string; illustration?: 'shield' }>(), {

@@ -114,11 +114,19 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 右侧网站详情面板
+ *
+ * 展示选中网站的基本信息、密码强度条、账号卡片列表
+ * （含用户名/密码的显示切换与复制、默认账号、关联邮箱）。
+ * 纯展示组件：所有操作（编辑/删除/复制/打开）均通过事件上抛。
+ */
 import { computed, reactive, watch } from 'vue'
 import type { Website, Mailbox } from '../../types/vault'
 import VerificationMailbox from '../account/VerificationMailbox.vue'
 
 const props = defineProps<{ website: Website | null; hideByDefault: boolean; mailboxes: Mailbox[]; highlightedAccountId?: string }>()
+/** 邮箱 ID → 邮箱对象的索引，用于 O(1) 查找账号关联的邮箱 */
 const mailboxById = computed(() => new Map(props.mailboxes.map((m) => [m.id, m])))
 defineEmits<{
   'edit-site': []
@@ -133,22 +141,28 @@ defineEmits<{
   'set-default': [id: string]
 }>()
 
+/** 各账号密码的明文可见状态（账号 ID → 是否显示） */
 const visible = reactive<Record<string, boolean>>({})
+/** 隐藏密码时的占位符号 */
 const maskedPassword = '••••••••••••••'
 
+/** 默认账号的密码（用于头部密码强度评估） */
 const defaultPassword = computed(() => {
   const account = props.website?.accounts.find((item) => item.isDefault) ?? props.website?.accounts[0]
   return account?.password ?? ''
 })
+/** 账号排序：默认账号置顶 */
 const sortedAccounts = computed(() => {
   const accounts = props.website?.accounts ?? []
   return [...accounts].sort((left, right) => Number(right.isDefault) - Number(left.isDefault))
 })
+/** 简易密码强度评分（1-5）：按密码长度估算，每 4 字符 1 分 */
 const strengthScore = computed(() => {
   const password = defaultPassword.value
   if (!password) return 0
   return Math.min(5, Math.max(1, Math.ceil(password.length / 4)))
 })
+/** 强度评分对应的文案 */
 const strengthLabel = computed(() => {
   if (!defaultPassword.value) return '未设置'
   if (strengthScore.value >= 4) return '强'
@@ -156,6 +170,7 @@ const strengthLabel = computed(() => {
   return '弱'
 })
 
+/** 让 visible 状态与当前账号列表保持同步：清掉已删除账号、为新账号按设置初始化 */
 const syncVisibility = () => {
   const ids = new Set(props.website?.accounts.map((account) => account.id) ?? [])
   Object.keys(visible).forEach((key) => {
@@ -166,13 +181,17 @@ const syncVisibility = () => {
   })
 }
 
+// 切换网站或改变"默认隐藏"设置时，重置全部密码可见状态
 watch(() => [props.website?.id, props.hideByDefault], () => {
   Object.keys(visible).forEach((key) => delete visible[key])
   syncVisibility()
 }, { immediate: true })
+// 账号列表变化（增删）时仅做增量同步
 watch(() => props.website?.accounts.map((account) => account.id).join('|'), syncVisibility)
 
+/** 取名称首字符作为占位 logo 文字 */
 const logoText = (name: string) => name.trim().slice(0, 1).toUpperCase() || '站'
+/** 格式化 ISO 时间为"年-月-日 时:分"；非法值原样返回 */
 const formatDate = (value: string) => {
   if (!value) return '未知'
   const date = new Date(value)
@@ -188,5 +207,6 @@ const formatDate = (value: string) => {
 </script>
 
 <style scoped>
+/* 从邮箱管理跳转过来时的高亮描边 */
 .linked-account-highlight { outline: 2px solid #0f7df2; outline-offset: -2px; }
 </style>

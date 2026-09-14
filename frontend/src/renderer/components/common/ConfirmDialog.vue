@@ -16,9 +16,11 @@
 </template>
 
 <script setup lang="ts">
+/** 通用确认弹窗：内容通过默认插槽传入，确认/取消结果以事件抛出 */
 defineProps<{ open: boolean }>()
 const emit = defineEmits<{ cancel: []; confirm: [] }>()
 
+// 点遮罩/ESC 关闭弹窗等同于取消
 const onDialogUpdate = (value: boolean) => {
   if (!value) emit('cancel')
 }

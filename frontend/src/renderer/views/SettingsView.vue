@@ -120,6 +120,14 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 设置页
+ *
+ * 两块功能：
+ * 1. 安全设置（自动锁定、剪贴板清空、密码默认隐藏）——随密码库加密保存；
+ * 2. 修改主密码——旧密码校验由主进程完成后用新密码重新加密整库。
+ * 打开时把当前设置拷贝到本地表单状态，点"保存设置"才真正写库。
+ */
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../stores/auth";
@@ -138,18 +146,22 @@ const settings = vault.data?.settings ?? {
 	hidePasswordByDefault: true,
 };
 
+// 表单本地状态（打开页面时从密码库设置初始化）
 const autoLockMinutes = ref(settings.autoLockMinutes);
 const lockOnMinimize = ref(settings.lockOnMinimize);
 const clearClipboard = ref(settings.clearClipboard);
 const clearClipboardSeconds = ref(settings.clearClipboardSeconds);
 const hidePasswordByDefault = ref(settings.hidePasswordByDefault);
+// 修改主密码的三个输入框
 const oldPwd = ref("");
 const newPwd = ref("");
 const confirmPwd = ref("");
 const error = ref("");
 
+/** 数字输入兜底：非法/空值一律转 0 */
 const toNumber = (value: unknown) => Number(value || 0);
 
+/** 保存安全设置到密码库 */
 const saveSettings = async () => {
 	await vault.updateSettings({
 		autoLockMinutes: autoLockMinutes.value,
@@ -161,6 +173,7 @@ const saveSettings = async () => {
 	app.showToast("设置已保存");
 };
 
+/** 修改主密码：先做完整性/一致性校验，再交主进程重新加密 */
 const changePwd = async () => {
 	if (!oldPwd.value || !newPwd.value || !confirmPwd.value) {
 		error.value = "请填写完整";

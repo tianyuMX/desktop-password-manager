@@ -61,6 +61,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 初始化页（仅首次启动可见）
+ *
+ * 设置主密码并创建密码库。两次输入一致后调用主进程初始化，
+ * 成功即视为解锁并进入主界面。
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
@@ -75,6 +81,7 @@ const pwd = ref('')
 const confirm = ref('')
 const error = ref('')
 
+/** 提交前做两次输入一致性校验，再交给主进程创建密码库 */
 const submit = async () => {
   if (!pwd.value || !confirm.value) {
     error.value = '密码不能为空'

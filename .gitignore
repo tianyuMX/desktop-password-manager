@@ -27,6 +27,8 @@ output/
 *.db
 *.db-shm
 *.db-wal
+*.xlsx
+*.xls
 
 # Logs
 *.log

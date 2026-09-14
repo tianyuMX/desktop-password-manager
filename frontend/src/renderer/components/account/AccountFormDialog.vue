@@ -25,6 +25,15 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 账号 新增/编辑 弹窗
+ *
+ * 除用户名/密码/备注外，还支持关联"验证邮箱"：
+ * - 可选择已有邮箱；
+ * - 或选"新增验证邮箱"，此时若用户名本身是邮箱地址会自动预填，
+ *   邮箱会与账号一起保存（由 store 的 upsertAccount 处理）。
+ * 选择 "__new__" 哨兵值表示新建邮箱。
+ */
 import { computed, ref, watch } from 'vue'
 import type { Account, AccountInput, Mailbox } from '../../types/vault'
 import MailboxFields from './MailboxFields.vue'
@@ -32,18 +41,22 @@ import { normalizeMailbox } from '../../utils/mailbox'
 
 const props = defineProps<{ open: boolean; account?: Account | null; mailboxes: Mailbox[]; saving: boolean }>()
 const emit = defineEmits<{ cancel: []; save: [payload: AccountInput] }>()
-const mailboxId = ref('')
+// ---- 邮箱关联表单状态 ----
+const mailboxId = ref('')            // 选中的邮箱 ID；'' 不关联，'__new__' 新建
 const mailUsername = ref('')
 const mailPassword = ref('')
 const mailUrl = ref('')
+/** 邮箱下拉选项：不关联 + 已有邮箱列表 + 新增入口（哨兵值 __new__） */
 const mailboxOptions = computed(() => [
   { title: '不关联邮箱', value: '' },
   ...props.mailboxes.map((m) => ({ title: m.username, value: m.id })),
   { title: '＋ 新增验证邮箱', value: '__new__' }
 ])
+// 选"新增邮箱"且账号用户名本身是邮箱时，自动预填邮箱账号
 watch(mailboxId, (id) => {
   if (id === '__new__' && !mailUsername.value) mailUsername.value = username.value.includes('@') ? username.value : ''
 })
+// ---- 账号表单状态 ----
 const username = ref('')
 const password = ref('')
 const note = ref('')
@@ -51,6 +64,7 @@ const isDefault = ref(false)
 const error = ref('')
 const editing = ref(false)
 
+// 弹窗打开时按传入账号回填（未传 = 新增模式）
 watch(() => props.open, () => {
   const account = props.open ? props.account : null
   editing.value = !!account
@@ -69,6 +83,10 @@ const onDialogUpdate = (value: boolean) => {
   if (!value) emit('cancel')
 }
 
+/**
+ * 提交：校验必填项 → 若选择新建邮箱则先做邮箱规范化/查重（失败就地提示）
+ * → 把表单值抛给父组件。保存中的防重由 saving prop + 父组件共同控制。
+ */
 const submit = () => {
   if (props.saving) return
   error.value = ''
@@ -91,5 +109,6 @@ const submit = () => {
 </script>
 
 <style scoped>
+/* 保存中禁用表单交互，防止重复提交 */
 .form-saving { pointer-events: none; }
 </style>

@@ -33,6 +33,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 网站 新增/编辑 弹窗
+ *
+ * 打开时按是否传入 website 初始化表单（编辑回填、新增留空）。
+ * 图标选择后会压缩到最大 256px 并转成 WebP base64，
+ * 作为字符串随密码库一起加密保存（不落独立文件）。
+ */
 import { computed, ref, watch } from 'vue'
 import { isHttpUrl } from '../../utils/url'
 import type { Website, WebsiteCategory } from '../../types/vault'
@@ -65,6 +72,10 @@ watch(() => props.open, () => {
 
 const logoText = computed(() => name.value.trim().slice(0, 1).toUpperCase() || '站')
 
+/**
+ * 把选中的图片文件压缩为不超过 256px 的 WebP DataURL。
+ * 使用 canvas 绘制缩放，输出质量 0.86，兼顾清晰度与库文件体积。
+ */
 const resizeIcon = (file: File) => new Promise<string>((resolve, reject) => {
   const objectUrl = URL.createObjectURL(file)
   const image = new Image()
@@ -89,6 +100,7 @@ const resizeIcon = (file: File) => new Promise<string>((resolve, reject) => {
   image.src = objectUrl
 })
 
+/** 图标文件选择：限制 5MB，超出直接提示；正常则压缩后暂存 */
 const onIconSelected = async (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]

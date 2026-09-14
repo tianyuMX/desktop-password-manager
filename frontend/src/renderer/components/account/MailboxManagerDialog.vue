@@ -53,7 +53,7 @@
       </v-card-actions>
     </v-card>
     <v-dialog :model-value="!!pendingDelete" :persistent="busy" max-width="420" @update:model-value="!busy && (pendingDelete = '')">
-      <v-card title="删除邮箱" text="确认删除这条邮箱记录？">
+      <v-card title="删除邮箱" text="确认将这条邮箱记录移入回收站？">
         <v-card-actions>
           <v-spacer />
           <v-btn :disabled="busy" @click="pendingDelete = ''">取消</v-btn>
@@ -65,6 +65,14 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 邮箱管理弹窗
+ *
+ * 两种模式切换：
+ * - 列表模式：手风琴展示所有邮箱及其关联账号（可跳转定位），支持打开/复制/编辑/删除；
+ * - 编辑模式：复用 MailboxFields 编辑或新增邮箱。
+ * 删除约束：仍被账号关联的邮箱不可删除（按钮禁用 + store 双重校验）。
+ */
 import { computed, ref, watch } from 'vue'
 import { useVaultStore } from '../../stores/vault'
 import { useClipboard } from '../../composables/useClipboard'
@@ -84,6 +92,7 @@ const busy = ref(false)
 const error = ref('')
 const pendingDelete = ref('')
 const expandedId = ref<string | undefined>()
+/** 预先按邮箱分组关联账号，模板展开面板时可直接读取对应列表。 */
 const linksByMailbox = computed(() => {
   const links = new Map<string, { websiteId: string; websiteName: string; accountId: string; username: string }[]>()
   for (const website of vault.websites) {
@@ -97,12 +106,14 @@ const linksByMailbox = computed(() => {
   return links
 })
 const usage = (id: string) => linksByMailbox.value.get(id)?.length ?? 0
+/** 关闭弹窗或取消编辑时，清空所有临时表单和确认状态。 */
 const reset = () => {
   editing.value = false
   expandedId.value = undefined
   editingId.value = username.value = password.value = url.value = error.value = pendingDelete.value = ''
 }
 watch(() => props.open, reset)
+/** 传入邮箱进入编辑模式；不传则初始化为空白的新增表单。 */
 const edit = (mailbox?: Mailbox) => {
   editing.value = true
   editingId.value = mailbox?.id ?? ''
@@ -111,6 +122,7 @@ const edit = (mailbox?: Mailbox) => {
   url.value = mailbox?.url ?? ''
   error.value = ''
 }
+/** 保存邮箱（新增或更新），成功后回到列表模式 */
 const save = async () => {
   if (busy.value) return
   busy.value = true
@@ -121,6 +133,7 @@ const save = async () => {
   } catch (e) { error.value = (e as Error).message }
   finally { busy.value = false }
 }
+/** 删除按钮只负责二次确认；真正的关联约束仍由 store 统一校验。 */
 const remove = async () => {
   if (busy.value) return
   busy.value = true
@@ -128,6 +141,7 @@ const remove = async () => {
   catch (e) { error.value = (e as Error).message }
   finally { pendingDelete.value = ''; busy.value = false }
 }
+/** 在系统默认浏览器中打开邮箱登录页 */
 const openMailbox = async (value: string) => {
   try {
     const result = await window.desktopApi.app.openExternal(value)

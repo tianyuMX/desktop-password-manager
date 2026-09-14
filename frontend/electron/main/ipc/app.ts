@@ -1,4 +1,5 @@
-﻿import { ipcMain } from 'electron'
+﻿/** 应用级 IPC 通道：在系统默认浏览器打开外部链接（协议白名单校验在 external-service 中） */
+import { ipcMain } from 'electron'
 import { fail, ok } from '../utils/result'
 import { openExternalUrl } from '../services/external-service'
 

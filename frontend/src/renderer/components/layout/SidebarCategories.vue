@@ -41,6 +41,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 左侧分类侧边栏
+ *
+ * 展示"全部 / 工作 / 个人"三个分类入口（含数量统计）
+ * 和一张静态安全状态卡片。分类通过 v-model 双向绑定给父组件。
+ */
 import { computed } from 'vue'
 import { useVaultStore } from '../../stores/vault'
 import type { CategoryFilter } from '../../types/vault'
@@ -49,6 +55,7 @@ defineProps<{ modelValue: CategoryFilter }>()
 defineEmits<{ 'update:modelValue': [value: CategoryFilter] }>()
 
 const vault = useVaultStore()
+/** 分类列表项：标签、描述、图标和当前数量（数量实时统计） */
 const categoryItems = computed(() => {
   const workCount = vault.websites.filter((site) => site.category === '工作').length
   const personalCount = vault.websites.filter((site) => site.category === '个人').length

@@ -52,6 +52,12 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 解锁页
+ *
+ * 输入主密码解锁密码库；解锁失败（主密码错误或库文件损坏）时
+ * 显示"从最近的备份恢复"入口，尝试用备份文件兜底解锁。
+ */
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '../stores/app'
@@ -86,6 +92,7 @@ const submit = async () => {
   }
 }
 
+/** 从最近的可用备份恢复解锁（用于主文件损坏的场景） */
 const recover = async () => {
   try {
     error.value = ''

@@ -1,6 +1,8 @@
+/** Vuetify 插件配置：自定义"冰蓝"浅色主题 + 语义化图标别名 */
 import { createVuetify } from 'vuetify'
 import { aliases, mdi } from 'vuetify/iconsets/mdi'
 
+// 在默认别名基础上扩展的语义化图标名（模板里用 $search、$lock 等）
 const appAliases = {
   ...aliases,
   account: 'mdi-account',
@@ -24,6 +26,7 @@ const appAliases = {
   note: 'mdi-note-text-outline',
   plus: 'mdi-plus',
   ratingFull: 'mdi-star',
+  recycle: 'mdi-delete-restore',
   search: 'mdi-magnify',
   security: 'mdi-shield-check-outline',
   settings: 'mdi-cog-outline',
@@ -34,6 +37,7 @@ const appAliases = {
 
 export default createVuetify({
   theme: {
+    // 全局默认浅色主题（冰蓝配色）
     defaultTheme: 'iceLight',
     themes: {
       iceLight: {

@@ -1,4 +1,11 @@
-﻿import { createRouter, createWebHashHistory } from 'vue-router'
+﻿/**
+ * 路由配置
+ *
+ * 四个页面对应密码库的完整生命周期：
+ * /initialize（首次初始化）→ /unlock（解锁）→ /app（主界面）→ /settings（设置）
+ * 使用 hash 模式以兼容 Electron 的 file:// 加载方式。
+ */
+import { createRouter, createWebHashHistory } from 'vue-router'
 import InitializeView from '../views/InitializeView.vue'
 import UnlockView from '../views/UnlockView.vue'
 import MainLayout from '../views/MainLayout.vue'
@@ -16,6 +23,12 @@ const router = createRouter({
   ]
 })
 
+/**
+ * 全局路由守卫：负责解锁状态机的访问控制。
+ * - 未初始化 → 一律重定向到 /initialize；
+ * - 已初始化未解锁 → 一律重定向到 /unlock；
+ * - 已解锁 → 不允许再回到 /unlock、/initialize（重定向回 /app）。
+ */
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (!auth.bootstrapped) await auth.bootstrap()

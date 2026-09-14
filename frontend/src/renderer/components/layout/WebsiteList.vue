@@ -42,6 +42,13 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * 中间网站列表
+ *
+ * 展示筛选后的网站（logo/名称/默认账号/账号数），
+ * 支持选中、新增入口和空态提示。本身不含业务逻辑，
+ * 全部操作通过事件抛给父组件（MainLayout）。
+ */
 import type { Website } from '../../types/vault'
 import lockIcon from '../../assets/images/lock-icon.png'
 
@@ -54,6 +61,7 @@ defineEmits<{
   settings: []
 }>()
 
+// 无自定义图标时用于占位 logo 的渐变配色池（按名称哈希取色，保证同名同色）
 const palette = [
   'linear-gradient(135deg, #38bdf8, #1169e6)',
   'linear-gradient(135deg, #60a5fa, #2563eb)',
@@ -62,11 +70,15 @@ const palette = [
   'linear-gradient(135deg, #818cf8, #0ea5e9)'
 ]
 
+/** 取名称首字符作为占位 logo 文字 */
 const logoText = (name: string) => name.trim().slice(0, 1).toUpperCase() || '站'
+/** 按名称哈希选一个渐变色 */
 const logoGradient = (name: string) => palette[Math.abs(hashText(name)) % palette.length]
+/** 列表副标题：优先显示默认账号用户名，其次网址或分类 */
 const defaultUsername = (site: Website) => {
   const account = site.accounts.find((item) => item.isDefault) ?? site.accounts[0]
   return account?.username || site.url || site.category
 }
+/** 简单字符串哈希（字符码累加） */
 const hashText = (value: string) => Array.from(value).reduce((sum, char) => sum + char.charCodeAt(0), 0)
 </script>

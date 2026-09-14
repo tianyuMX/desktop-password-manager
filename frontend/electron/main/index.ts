@@ -1,4 +1,10 @@
-﻿import { app, BrowserWindow } from 'electron'
+﻿/**
+ * 主进程入口
+ *
+ * 职责：创建应用菜单与主窗口、注册各 IPC 通道、
+ * 并把窗口事件（如最小化）接入自动锁定逻辑。
+ */
+import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { dialog, Menu, type MenuItemConstructorOptions } from 'electron'
 import { registerVaultIpc } from './ipc/vault'
@@ -6,9 +12,16 @@ import { registerAppIpc } from './ipc/app'
 import { registerClipboardIpc } from './ipc/clipboard'
 import { notifyAutoLock, registerWindow } from './services/lock-service'
 
+// Vite 插件注入的编译期常量：开发模式下为 dev server 地址，生产构建下为 undefined
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
 declare const MAIN_WINDOW_VITE_NAME: string
 
+// 开发版使用独立数据目录，避免调试时读写已安装正式版的密码库。
+if (!app.isPackaged) {
+  app.setPath('userData', join(app.getPath('appData'), '密码保险箱-dev'))
+}
+
+/** 配置应用顶部菜单栏（中文化，开发者工具仅在开发模式可见） */
 const configureApplicationMenu = () => {
   const template: MenuItemConstructorOptions[] = [
     {
@@ -75,21 +88,28 @@ const configureApplicationMenu = () => {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
 
+/** 创建主窗口：启用上下文隔离 + 沙箱，仅通过 preload 暴露最小能力 */
 const createWindow = () => {
+  const icon = app.isPackaged
+    ? join(process.resourcesPath, 'app-icon.png')
+    : join(app.getAppPath(), 'src/renderer/assets/images/app-icon.png')
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
+    icon,
     webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
+      contextIsolation: true,   // 隔离渲染进程与 preload 的 JS 环境
+      nodeIntegration: false,   // 渲染进程禁用 Node API
+      sandbox: true,            // 开启 Chromium 沙箱
       preload: join(__dirname, 'preload.js')
     }
   })
 
-  registerWindow(win)
-  win.on('minimize', () => notifyAutoLock())
+  registerWindow(win) // 注册窗口引用，供自动锁定通知使用
+  win.on('minimize', () => notifyAutoLock()) // 最小化时通知渲染进程（由设置决定是否锁定）
 
+  // 开发模式加载 dev server，生产模式加载打包产物
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     void win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
   } else {

@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+/** 账号卡片内的"验证邮箱"区块：脱敏展示邮箱账号，提供打开邮箱/复制账号/复制密码快捷操作 */
 import type { Mailbox } from '../../types/vault'
 import { maskEmail } from '../../utils/mailbox'
 import { useClipboard } from '../../composables/useClipboard'
